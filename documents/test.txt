@@ -1,0 +1,39 @@
+Guide du Chatbot RAG
+
+Introduction:
+Ce document explique comment fonctionne un chatbot RAG (Retrieval Augmented Generation).
+Un système RAG permet de répondre aux questions en se basant sur des documents spécifiques.
+
+Section 1: Qu'est-ce qu'un RAG?
+RAG signifie Retrieval Augmented Generation. C'est une technique qui combine:
+- La recherche de documents pertinents (Retrieval)
+- La génération de réponses par un modèle de langage (Generation)
+
+Cette approche permet d'avoir des réponses précises basées sur vos propres documents.
+
+Section 2: Avantages
+Les principaux avantages d'un système RAG sont:
+- Réponses précises basées sur vos documents
+- Pas besoin d'entraîner un modèle complet
+- Fonctionne avec n'importe quel type de document
+- Permet de garder les informations à jour facilement
+
+Section 3: LM Studio
+LM Studio est un outil qui permet d'exécuter des modèles de langage localement sur votre ordinateur.
+Cela signifie que vos données restent privées et vous n'avez pas besoin d'une connexion Internet.
+LM Studio supporte de nombreux modèles comme Llama, Mistral, Phi, et bien d'autres.
+
+Section 4: Utilisation
+Pour utiliser ce chatbot RAG:
+1. Assurez-vous que LM Studio est lancé avec un modèle chargé
+2. Démarrez le serveur local dans LM Studio
+3. Lancez le chatbot avec python main.py
+4. Chargez votre document texte
+5. Posez vos questions!
+
+Le système trouvera automatiquement les passages pertinents dans le document
+et générera une réponse basée sur ces informations.
+
+Conclusion:
+Ce système est idéal pour analyser des documents techniques, des rapports,
+des manuels, ou tout autre type de documentation que vous souhaitez interroger.
