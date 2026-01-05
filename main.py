@@ -12,7 +12,7 @@ def main():
     print("\n" + "=" * 70 + "\n")
     
     # Chemin par défaut vers votre CSV
-    default_csv = "data/vgsales.csv"
+    default_csv = "data\\vgsales.csv"
     
     csv_path = input(f"📁 Entrez le chemin vers votre CSV (Entrée pour '{default_csv}') : ").strip()
     

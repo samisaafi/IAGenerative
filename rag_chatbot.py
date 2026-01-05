@@ -33,21 +33,31 @@ class RAGChatbot:
             self.load_csv(csv_path)
     
     def load_csv(self, csv_path):
-        """Charger et analyser le fichier CSV"""
+        """Charger et analyser le fichier CSV avec encodage sécurisé"""
         print(f"\n📊 Chargement du fichier CSV : {csv_path}")
-        
+
         if not os.path.exists(csv_path):
             raise FileNotFoundError(f"Le fichier {csv_path} n'existe pas")
-        
-        # Lire le CSV
-        self.df = pd.read_csv(csv_path)
-        print(f"✓ CSV chargé : {len(self.df)} lignes, {len(self.df.columns)} colonnes")
+
+        # Essayez plusieurs encodages pour éviter les erreurs Unicode
+        encodings = ["utf-8", "utf-16", "latin1", "cp1252"]
+        for enc in encodings:
+            try:
+                self.df = pd.read_csv(csv_path, encoding=enc)
+                print(f"✓ CSV chargé avec succès (encoding={enc})")
+                break
+            except UnicodeDecodeError:
+                continue
+        else:
+            raise UnicodeDecodeError(f"Impossible de lire le fichier {csv_path} avec les encodages standards.")
+
+        print(f"✓ {len(self.df)} lignes, {len(self.df.columns)} colonnes")
         print(f"✓ Colonnes : {', '.join(self.df.columns.tolist())}")
-        
+
         # Créer des documents textuels à partir du CSV
         documents = self._create_documents_from_csv()
         print(f"✓ {len(documents)} documents créés à partir des données")
-        
+
         # Diviser en chunks
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=500,
@@ -56,7 +66,7 @@ class RAGChatbot:
         )
         chunks = text_splitter.split_documents(documents)
         print(f"✓ {len(chunks)} chunks créés")
-        
+
         # Créer la base vectorielle
         print("⏳ Création de la base vectorielle...")
         self.vectorstore = Chroma.from_documents(
@@ -65,9 +75,10 @@ class RAGChatbot:
             persist_directory="./chroma_db"
         )
         print("✓ Base vectorielle créée et persistée")
-        
+
         # Créer la chaîne QA
         self._create_qa_chain()
+
     
     def _create_documents_from_csv(self):
         """Convertir les données CSV en documents textuels"""
