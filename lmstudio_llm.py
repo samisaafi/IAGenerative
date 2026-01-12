@@ -1,58 +1,74 @@
-import openai
+import requests
+import json
 
 class LMStudioLLM:
-    """Wrapper pour utiliser LM Studio comme LLM (OpenAI legacy API)"""
-
-    def __init__(self, base_url="http://localhost:1234/v1", temperature=0.7):
+    """Wrapper pour utiliser LM Studio comme backend LLM via l'API OpenAI (compatible Python 3.13)"""
+    
+    def __init__(self, base_url="http://localhost:1234/v1", temperature=0.7, max_tokens=2000):
         """
-        Initialise la connexion à LM Studio
-
+        Initialise le client LM Studio
+        
         Args:
-            base_url: URL de l'API LM Studio
-            temperature: Créativité des réponses (0.0 à 1.0)
+            base_url: URL du serveur LM Studio (par défaut: http://localhost:1234/v1)
+            temperature: Température pour la génération (0.0 = déterministe, 1.0 = créatif)
+            max_tokens: Nombre maximum de tokens à générer
         """
-        openai.api_base = base_url
-        openai.api_key = "not-needed"
+        self.base_url = base_url.rstrip('/')
         self.temperature = temperature
-        self.base_url = base_url
-
-    def __call__(self, prompt: str) -> str:
-        """Appeler LM Studio avec un prompt simple"""
+        self.max_tokens = max_tokens
+        self.api_endpoint = f"{self.base_url}/chat/completions"
+    
+    def __call__(self, prompt):
+        """
+        Génère une réponse à partir d'un prompt
+        
+        Args:
+            prompt: Le prompt à envoyer au modèle
+            
+        Returns:
+            str: La réponse générée par le modèle
+        """
         try:
-            response = openai.ChatCompletion.create(
-                model="local-model",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=self.temperature,
-                max_tokens=1000
+            # Préparer la requête
+            headers = {
+                "Content-Type": "application/json"
+            }
+            
+            payload = {
+                "model": "local-model",
+                "messages": [
+                    {"role": "user", "content": prompt}
+                ],
+                "temperature": self.temperature,
+                "max_tokens": self.max_tokens
+            }
+            
+            # Envoyer la requête
+            response = requests.post(
+                self.api_endpoint,
+                headers=headers,
+                json=payload,
+                timeout=120  # 2 minutes timeout
             )
-            return response.choices[0].message.content.strip()
+            
+            # Vérifier la réponse
+            if response.status_code == 200:
+                data = response.json()
+                return data['choices'][0]['message']['content']
+            else:
+                return f"Erreur HTTP {response.status_code}: {response.text}"
+            
+        except requests.exceptions.ConnectionError:
+            return f"❌ Erreur de connexion à LM Studio sur {self.base_url}\n\n💡 Vérifiez que:\n   1. LM Studio est lancé\n   2. Un modèle est chargé\n   3. Le serveur est démarré sur le port 1234"
+        
+        except requests.exceptions.Timeout:
+            return "❌ Timeout: Le modèle met trop de temps à répondre. Essayez avec un prompt plus court."
+        
         except Exception as e:
-            return (
-                f"Erreur de connexion à LM Studio : {str(e)}\n"
-                f"Vérifiez que LM Studio est lancé avec le serveur actif sur {self.base_url}"
-            )
-
-    def generate_with_context(self, context: str, question: str) -> str:
-        """Génère une réponse en utilisant un contexte fourni"""
-        prompt = f"""Répondez à la question en utilisant uniquement le contexte ci-dessous.
-
-Contexte:
-{context}
-
-Question: {question}
-
-Réponse:"""
-        return self(prompt)
-
-    def test_connection(self) -> bool:
-        """Teste la connexion à LM Studio"""
-        try:
-            response = openai.ChatCompletion.create(
-                model="local-model",
-                messages=[{"role": "user", "content": "Réponds uniquement par OK."}],
-                temperature=0.0,
-                max_tokens=5
-            )
-            return True
-        except Exception:
-            return False
+            return f"❌ Erreur: {str(e)}"
+    
+    def generate(self, prompt, **kwargs):
+        """
+        Méthode alternative pour la génération (compatible avec certaines interfaces LangChain)
+        """
+        return self.__call__(prompt)
